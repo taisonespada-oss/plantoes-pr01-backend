@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Plantões Extras - PR01</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f1f5f9;
+      color: #1a1a2e;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 15px;
+    }
+
+    h1 { font-size: 1.6rem; margin-bottom: 6px; color: #4c1d95; letter-spacing: 1px; text-align: center; }
+    .subtitle { font-size: 0.85rem; color: #6b7280; margin-bottom: 24px; text-align: center; }
+
+    /* >>> BARRA DO MODO ADMIN */
+    .admin-banner {
+      font-size: 0.8rem;
+      border-radius: 999px;
+      padding: 6px 14px;
+      margin-bottom: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .admin-banner span {
+      font-weight: 600;
+    }
+    .admin-banner.inativo {
+      background: #e5e7eb;
+      color: #4b5563;
+      border: 1px solid #d1d5db;
+    }
+    .admin-banner.ativo {
+      background: #dcfce7;
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+
+    .page-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    .config-panel {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px 20px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      border: 1px solid #e5e7eb;
+    }
+
+    .config-panel-title {
+      font-size: 0.78rem; font-weight: 700; color: #4c1d95;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 4px; text-align: center;
+    }
+    .config-panel-sub {
+      font-size: 0.71rem; color: #9ca3af;
+      text-align: center; margin-bottom: 14px;
+    }
+
+    .config-lock-btn {
+      display: flex; align-items: center; justify-content: center;
+      gap: 5px; width: 100%; background: #f5f3ff;
+      border: 1.5px solid #ddd6fe; color: #7c3aed;
+      border-radius: 8px; padding: 7px; font-size: 0.78rem;
+      font-weight: 600; cursor: pointer; margin-bottom: 14px;
+      transition: background 0.2s;
+    }
+    .config-lock-btn:hover { background: #ede9fe; }
+
+    .config-table-wrap { overflow-x: auto; }
+
+    .config-table {
+      width: 100%; border-collapse: collapse; font-size: 0.8rem;
+    }
+    .config-table th {
+      background: #7c3aed; color: white; padding: 9px 8px;
+      text-align: center; font-size: 0.72rem;
+      text-transform: uppercase; letter-spacing: 0.3px; white-space: nowrap;
+    }
+    .config-table th:first-child { border-radius: 6px 0 0 0; }
+    .config-table th:last-child  { border-radius: 0 6px 0 0; }
+    .config-table td {
+      padding: 6px 5px; border-bottom: 1px solid #f3f4f6; vertical-align: middle;
+    }
+    .config-table tr:last-child td { border-bottom: none; }
+
+    .config-row-num {
+      text-align: center; font-weight: 700;
+      color: #7c3aed; font-size: 0.82rem; width: 24px;
+    }
+
+    .config-select {
+      width: 100%; border: 1.5px solid #d1d5db; border-radius: 6px;
+      padding: 7px 8px; font-size: 0.78rem; color: #1a1a2e;
+      outline: none; font-family: 'Segoe UI', sans-serif;
+      background: #fff;
+      cursor: pointer; transition: border 0.2s;
+    }
+    .config-select:focus { border-color: #7c3aed; }
+    .config-select:disabled { background-color: #f9fafb; color: #9ca3af; cursor: default; }
+
+    .config-date {
+      width: 100%; border: 1.5px solid #d1d5db; border-radius: 6px;
+      padding: 7px 6px; font-size: 0.76rem; color: #1a1a2e;
+      outline: none; font-family: 'Segoe UI', sans-serif;
+      transition: border 0.2s; background: #fff; cursor: pointer;
+    }
+    .config-date:focus { border-color: #7c3aed; }
+    .config-date:disabled { background: #f9fafb; color: #9ca3af; cursor: default; }
+
+    .periodo-status {
+      margin-top: 12px; padding: 8px 12px; border-radius: 8px;
+      font-size: 0.76rem; font-weight: 600; text-align: center;
+    }
+    .periodo-status.ativo   { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .periodo-status.inativo { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .periodo-status.neutro  { background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; }
+
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      width: 100%;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      border: 1px solid #e5e7eb;
+    }
+
+    .legenda {
+      display: flex; gap: 14px; flex-wrap: wrap;
+      justify-content: center; margin-bottom: 16px;
+      font-size: 0.76rem; color: #6b7280;
+    }
+    .legenda-item { display: flex; align-items: center; gap: 5px; }
+    .legenda-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── LEGENDA DE STATUS DO DIA ── */
+    .legenda-dia-status {
+      display: flex; gap: 14px; flex-wrap: wrap;
+      justify-content: center; margin-bottom: 16px;
+      font-size: 0.76rem; color: #6b7280;
+      padding-top: 10px; border-top: 1px solid #f3f4f6;
+    }
+    .legenda-dia-status .legenda-item .legenda-dot {
+      width: 14px; height: 14px; border-radius: 4px;
+    }
+
+    .nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .nav button {
+      background: #ede9fe; border: none; color: #7c3aed;
+      width: 36px; height: 36px; border-radius: 50%;
+      cursor: pointer; font-size: 1.1rem; transition: background 0.2s;
+    }
+    .nav button:hover { background: #ddd6fe; }
+    .nav h2 { font-size: 1.1rem; color: #1a1a2e; text-transform: capitalize; }
+
+    .grid-header { display: grid; grid-template-columns: repeat(7,1fr); gap: 4px; margin-bottom: 6px; }
+    .grid-header span {
+      text-align: center; font-size: 0.72rem; color: #9ca3af;
+      font-weight: 600; text-transform: uppercase; padding: 4px 0;
+    }
+    .grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 6px; }
+
+    .day {
+      aspect-ratio: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      border-radius: 10px; cursor: pointer;
+      border: 1.5px solid transparent; background: #f9fafb;
+      transition: all 0.15s; font-size: 0.88rem;
+      color: #374151; user-select: none;
+    }
+    .day:hover { border-color: #a78bfa88; background: #ede9fe; }
+    .day.empty { cursor: default; background: transparent; }
+    .day.empty:hover { border-color: transparent; background: transparent; }
+    .day.today { border-color: #7c3aed; color: #7c3aed; font-weight: 700; background: #ede9fe; }
+
+    /* ── CORES DE STATUS DO DIA ── */
+    .day.has-available {
+      background: #dcfce7;
+      border-color: #86efac;
+      color: #14532d;
+    }
+    .day.has-available:hover {
+      background: #bbf7d0;
+      border-color: #4ade80;
+    }
+    .day.all-filled {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #7f1d1d;
+    }
+    .day.all-filled:hover {
+      background: #fecaca;
+      border-color: #f87171;
+    }
+    .day.today.has-available {
+      background: #dcfce7;
+      border-color: #7c3aed;
+      color: #14532d;
+    }
+    .day.today.all-filled {
+      background: #fee2e2;
+      border-color: #7c3aed;
+      color: #7f1d1d;
+    }
+
+    .dot-row { display: flex; gap: 3px; margin-top: 4px; flex-wrap: wrap; justify-content: center; max-width: 90%; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .dot-green { background: #10b981; }
+    .dot-blue  { background: #3b82f6; }
+    .dot-black { background: #111827; }
+    .day-num { font-size: 0.85rem; line-height: 1; }
+
+    .overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      z-index: 100; align-items: center; justify-content: center;
+      padding: 15px; overflow-y: auto;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 16px; padding: 28px;
+      width: 100%; max-width: 480px;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.18);
+      border: 1px solid #e5e7eb; animation: slideUp 0.2s ease;
+      max-height: 90vh; overflow-y: auto;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+    .modal > h3 {
+      font-size: 1.1rem; color: #7c3aed; margin-bottom: 18px;
+      text-align: center; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px;
+    }
+
+    .periodo-bloqueado-aviso {
+      background: #fff7ed; border: 1.5px solid #fdba74;
+      border-radius: 10px; padding: 14px; margin-bottom: 14px;
+      font-size: 0.85rem; color: #92400e; text-align: center; line-height: 1.5;
+    }
+
+    .slot-card {
+      border: 1.5px solid #e5e7eb; border-radius: 10px;
+      padding: 14px; margin-bottom: 12px; background: #fafafa;
+    }
+    .slot-card.tipo-green { border-left: 4px solid #10b981; }
+    .slot-card.tipo-blue  { border-left: 4px solid #3b82f6; }
+    .slot-card.tipo-black { border-left: 4px solid #111827; }
+
+    .slot-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 10px; gap: 6px;
+    }
+    .slot-header-left { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; }
+    .tipo-indicator { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .slot-tipo-label {
+      font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.4px; color: #374151; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
+    }
+    .slot-header-right { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+
+    .btn-icon-edit { background: transparent; border: none; cursor: pointer; font-size: 0.9rem; padding: 2px 4px; opacity: 0.6; transition: opacity 0.2s; }
+    .btn-icon-edit:hover { opacity: 1; }
+    .btn-icon-del  { background: transparent; border: none; cursor: pointer; font-size: 1rem; padding: 2px 4px; color: #ef4444; transition: transform 0.2s; }
+    .btn-icon-del:hover { transform: scale(1.2); }
+
+    .slot-card input[type="text"],
+    .slot-card select {
+      width: 100%; background: #fff; border: 1.5px solid #d1d5db; color: #1a1a2e;
+      border-radius: 6px; padding: 8px 12px; font-size: 0.9rem; margin-bottom: 8px;
+      outline: none; transition: border 0.2s; font-family: 'Segoe UI', sans-serif;
+      appearance: none; -webkit-appearance: none; cursor: pointer;
+    }
+    .select-wrapper { position: relative; margin-bottom: 8px; }
+    .select-wrapper select { margin-bottom: 0; padding-right: 32px; }
+    .select-wrapper::after {
+      content: '▾'; position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%); color: #7c3aed; pointer-events: none; font-size: 0.9rem;
+    }
+    .slot-card input[type="text"]:focus,
+    .slot-card select:focus { border-color: #7c3aed; }
+
+    .slot-info { font-size: 0.9rem; color: #374151; margin-bottom: 4px; }
+    .slot-info strong { color: #4c1d95; }
+    .status-preenchida { font-size: 0.72rem; color: #059669; font-weight: 700; text-transform: uppercase; }
+    .status-disponivel  { font-size: 0.72rem; color: #9ca3af; font-weight: 700; text-transform: uppercase; }
+
+    .btn { width: 100%; padding: 10px; border-radius: 6px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 600; transition: all 0.2s; margin-top: 5px; }
+    .btn:hover { opacity: 0.85; }
+    .btn-cancel  { background: #f3f4f6; color: #6b7280; margin-top: 20px; border: 1px solid #e5e7eb; }
+    .btn-save    { background: #10b981; color: #fff; }
+    .btn-del     { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
+    .btn-add-slot { background: transparent; border: 1.5px dashed #a78bfa; color: #7c3aed; margin-top: 5px; }
+    .btn-add-slot:hover { background: #f5f3ff; }
+
+    .unidade-badge {
+      display: inline-block; background: #ede9fe; color: #7c3aed;
+      border-radius: 20px; padding: 2px 10px; font-size: 0.76rem; font-weight: 600;
+    }
+
+    .summary-container { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 22px; }
+    .sum-card { background: #f5f3ff; border-radius: 10px; padding: 14px 24px; border: 1.5px solid #ddd6fe; text-align: center; width: 100%; }
+    .sum-label { font-size: 0.75rem; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sum-value { font-size: 1.5rem; font-weight: 700; color: #7c3aed; margin-top: 4px; }
+    .btn-export { background: #2563eb; color: white; padding: 12px 24px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: background 0.2s; width: 100%; }
+    .btn-export:hover { background: #1d4ed8; }
+
+    .table-card {
+      background: #ffffff; border-radius: 16px; padding: 24px;
+      width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      border: 1px solid #e5e7eb;
+    }
+    .table-card-title {
+      font-size: 0.88rem; font-weight: 700; color: #4c1d95;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      margin-bottom: 16px; text-align: center;
+      padding-bottom: 10px; border-bottom: 1px solid #e5e7eb;
+    }
+    .report-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+    .report-table th {
+      background: #7c3aed; color: white; padding: 10px 12px;
+      text-align: left; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .report-table th:first-child { border-radius: 6px 0 0 0; }
+    .report-table th:last-child  { border-radius: 0 6px 0 0; }
+    .report-table td { padding: 9px 12px; border-bottom: 1px solid #f3f4f6; color: #374151; vertical-align: middle; }
+    .report-table tr:last-child td { border-bottom: none; }
+    .report-table tr:hover td { background: #f9f5ff; }
+
+    .tipo-pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 3px 10px; font-size: 0.73rem; font-weight: 700; }
+    .tipo-pill-green { background: #d1fae5; color: #065f46; }
+    .tipo-pill-blue  { background: #dbeafe; color: #1e40af; }
+    .tipo-pill-dark  { background: #f3f4f6; color: #111827; border: 1px solid #d1d5db; }
+    .tipo-pill-dot   { width: 7px; height: 7px; border-radius: 50%; }
+    .empty-table-msg { text-align: center; color: #9ca3af; font-size: 0.88rem; padding: 30px 0; font-style: italic; }
+
+    .senha-painel {
+      display: none; position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #ffffff; border: 2px solid #7c1d95;
+      border-radius: 16px; padding: 32px 28px;
+      width: 100%; max-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25); z-index: 999;
+    }
+    .senha-painel.open { display: block; }
+    .senha-painel-titulo { font-size: 1rem; font-weight: 700; color: #4c1d95; text-align: center; margin-bottom: 6px; }
+    .senha-painel-sub { font-size: 0.78rem; color: #9ca3af; text-align: center; margin-bottom: 20px; }
+    .senha-painel label { display: block; font-size: 0.78rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 5px; margin-top: 12px; }
+    .senha-painel input[type="password"] { width: 100%; border: 1.5px solid #d1d5db; border-radius: 8px; padding: 10px 14px; font-size: 0.92rem; outline: none; font-family: 'Segoe UI', sans-serif; transition: border 0.2s; color: #1a1a2e; }
+    .senha-painel input[type="password"]:focus { border-color: #7c3aed; }
+    .senha-painel-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .btn-senha-confirmar { flex: 1; background: #7c3aed; color: #fff; border: none; border-radius: 8px; padding: 11px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+    .btn-senha-confirmar:hover { background: #6d28d9; }
+    .btn-senha-fechar { flex: 1; background: #f3f4f6; color: #6b7280; border: 1px solid #e5e7eb; border-radius: 8px; padding: 11px; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+    .senha-msg-erro { font-size: 0.8rem; color: #dc2626; text-align: center; margin-top: 10px; min-height: 18px; }
+    .senha-msg-ok   { font-size: 0.8rem; color: #059669; text-align: center; margin-top: 10px; min-height: 18px; font-weight: 600; }
+
+    .senha-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(3px); z-index: 998; }
+    .senha-backdrop.open { display: block; }
+  </style>
+</head>
+<body>
+
+<h1>Plantões Extras — PR01</h1>
+<p class="subtitle">Gerencie as vagas diárias</p>
+
+<!-- >>> BANNER MODO ADMIN -->
+<div id="adminBanner" class="admin-banner inativo">
+  <span>Modo admin inativo</span> · Atalho: Alt+*
+</div>
+
+<div class="page-wrapper">
+
+  <!-- ══ CONFIGURAÇÃO DE ACESSO ══ -->
+  <div class="config-panel">
+    <div class="config-panel-title">⚙️ Configuração de Acesso</div>
+    <div class="config-panel-sub">Define quem pode preencher e em qual período</div>
+
+    <button class="config-lock-btn" onclick="toggleConfigEdicao()">
+      <span id="configLockIcon">🔒</span>
+      <span id="configLockTxt">Editar configurações</span>
+    </button>
+
+    <div class="config-table-wrap">
+      <table class="config-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Ordem de Preenchimento</th>
+            <th>Liberação</th>
+            <th>Término</th>
+          </tr>
+        </thead>
+        <tbody id="configTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="periodo-status neutro" id="periodoStatus">
+      Nenhum período configurado
+    </div>
+  </div>
+
+  <!-- ══ CALENDÁRIO ══ -->
+  <div class="card">
+    <div class="legenda">
+      <div class="legenda-item"><div class="legenda-dot" style="background:#10b981"></div>Diurno — Segurança</div>
+      <div class="legenda-item"><div class="legenda-dot" style="background:#3b82f6"></div>Diurno — Casa de Revista</div>
+      <div class="legenda-item"><div class="legenda-dot" style="background:#111827"></div>Noturno</div>
+    </div>
+
+    <!-- ══ LEGENDA DE STATUS DO DIA ══ -->
+    <div class="legenda-dia-status">
+      <div class="legenda-item">
+        <div class="legenda-dot" style="background:#dcfce7;border:1.5px solid #86efac;border-radius:4px;width:14px;height:14px;"></div>
+        Com vagas disponíveis
+      </div>
+      <div class="legenda-item">
+        <div class="legenda-dot" style="background:#fee2e2;border:1.5px solid #fca5a5;border-radius:4px;width:14px;height:14px;"></div>
+        Todas as vagas preenchidas
+      </div>
+    </div>
+
+    <div class="nav">
+      <button id="prevMonth">‹</button>
+      <h2 id="monthLabel"></h2>
+      <button id="nextMonth">›</button>
+    </div>
+
+    <div class="grid-header" id="weekdays"></div>
+    <div class="grid" id="calGrid"></div>
+
+    <div class="summary-container">
+      <div class="sum-card">
+        <div class="sum-label">Total de Plantões Preenchidos no Mês</div>
+        <div class="sum-value" id="totalExtras">0</div>
+      </div>
+      <button class="btn-export" onclick="exportToExcel()">📥 Exportar Relatório (.xls)</button>
+    </div>
+  </div>
+
+  <!-- ══ TABELA DE CONSULTA ══ -->
+  <div class="table-card">
+    <div class="table-card-title" id="tableTitle">📋 Plantões Extras PR01 — Mês</div>
+    <div id="reportTableContainer"></div>
+  </div>
+
+</div>
+
+<!-- MODAL DIA -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modalTitle">Vagas do Dia</h3>
+    <div id="modalPeriodoAviso"></div>
+    <div id="slotsContainer"></div>
+    <button class="btn btn-add-slot" onclick="addSlot()">+ Adicionar Nova Vaga</button>
+    <button class="btn btn-cancel" id="btnClose">Fechar</button>
+  </div>
+</div>
+
+<div class="senha-backdrop" id="senhaBackdrop"></div>
+
+<!-- PAINEL SENHA (Alt+A) -->
+<div class="senha-painel" id="senhaPainel">
+  <div class="senha-painel-titulo">🔑 Alterar Senha de Acesso</div>
+  <div class="senha-painel-sub">Painel restrito — atalho Alt+A</div>
+  <label>Senha atual</label>
+  <input type="password" id="senhaAtual" placeholder="Senha atual" autocomplete="off" />
+  <label>Nova senha</label>
+  <input type="password" id="senhaNova" placeholder="Nova senha" autocomplete="off" />
+  <label>Confirmar nova senha</label>
+  <input type="password" id="senhaConfirm" placeholder="Repita a nova senha" autocomplete="off" />
+  <div class="senha-msg-erro" id="senhaMsgErro"></div>
+  <div class="senha-msg-ok"   id="senhaMsgOk"></div>
+  <div class="senha-painel-actions">
+    <button class="btn-senha-confirmar" onclick="confirmarAlteracaoSenha()">Confirmar</button>
+    <button class="btn-senha-fechar"    onclick="fecharPainelSenha()">Cancelar</button>
+  </div>
+</div>
+const API_URL = 'https://plantoes-pr01-backend.onrender.com';
+<script>
+  // ─── SENHA / ADMIN ─────────────────────────────────────────
+  let SENHA = 'segurança2026';
+let periodos = Array.from({length: NUM_LINHAS}, () => ({
+  unidade: '',
+  inicio: '',
+  fim: ''
+}));
+let extras = {};
+
+async function salvarDadosNoServidor() {
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ senha: SENHA, periodos, extras })
+    });
+  } catch (err) {
+    console.error('Erro ao salvar dados no servidor:', err);
+    alert('Não foi possível salvar no servidor.');
+  }
+}
+
+  // >>> flag global do modo admin
+  let adminAtivo = false;
+
+  // >>> função para atualizar o banner visual
+  function atualizarAdminBanner() {
+    const banner = document.getElementById('adminBanner');
+    if (!banner) return;
+    if (adminAtivo) {
+      banner.classList.remove('inativo');
+      banner.classList.add('ativo');
+      banner.innerHTML = '<span>Modo admin ATIVO</span> · Alt+* para sair';
+    } else {
+      banner.classList.remove('ativo');
+      banner.classList.add('inativo');
+      banner.innerHTML = '<span>Modo admin inativo</span> · Alt+* para entrar';
+    }
+  }
+
+  // >>> wrapper: só pede senha se adminAtivo == false
+  function verificarSenha(msg) {
+    if (adminAtivo) return true;
+    const e = prompt(msg);
+    if (e === null) return false;
+    if (e === SENHA) return true;
+    alert('Senha incorreta! Ação não realizada.');
+    return false;
+  }
+
+  function abrirPainelSenha() {
+    ['senhaAtual','senhaNova','senhaConfirm'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('senhaMsgErro').textContent = '';
+    document.getElementById('senhaMsgOk').textContent   = '';
+    document.getElementById('senhaPainel').classList.add('open');
+    document.getElementById('senhaBackdrop').classList.add('open');
+    setTimeout(() => document.getElementById('senhaAtual').focus(), 100);
+  }
+
+  function fecharPainelSenha() {
+    document.getElementById('senhaPainel').classList.remove('open');
+    document.getElementById('senhaBackdrop').classList.remove('open');
+  }
+
+  function confirmarAlteracaoSenha() {
+    const atual    = document.getElementById('senhaAtual').value;
+    const nova     = document.getElementById('senhaNova').value.trim();
+    const confirma = document.getElementById('senhaConfirm').value.trim();
+    const msgErro  = document.getElementById('senhaMsgErro');
+    const msgOk    = document.getElementById('senhaMsgOk');
+    msgErro.textContent = ''; msgOk.textContent = '';
+    if (atual !== SENHA)   { msgErro.textContent = 'Senha atual incorreta.'; return; }
+    if (!nova)             { msgErro.textContent = 'Nova senha não pode ser vazia.'; return; }
+    if (nova.length < 6)   { msgErro.textContent = 'Mínimo 6 caracteres.'; return; }
+    if (nova !== confirma) { msgErro.textContent = 'Confirmação não confere.'; return; }
+    SENHA = nova;
+    salvarDadosNoServidor();
+    msgOk.textContent = '✔ Senha alterada com sucesso!';
+    setTimeout(fecharPainelSenha, 1800);
+  }
+
+  document.addEventListener('keydown', e => {
+    // Alt+A – painel de alteração de senha (como já existia)
+    if (e.altKey && ['a','A','á','Á'].includes(e.key)) {
+      e.preventDefault();
+      abrirPainelSenha();
+    }
+
+    // >>> Alt+* – alternar modo admin
+    if (e.altKey && (e.key === '*' || e.code === 'NumpadMultiply')) {
+      e.preventDefault();
+      if (!adminAtivo) {
+        // vai entrar em modo admin: pede senha
+        if (verificarSenha('Digite a senha para ativar o modo admin:')) {
+          adminAtivo = true;
+          atualizarAdminBanner();
+          // Se estava com edição bloqueada, força refresh para liberar
+          configEdicaoAtiva = true;
+          document.getElementById('configLockIcon').textContent = '🔓';
+          document.getElementById('configLockTxt').textContent  = 'Bloquear edição';
+          buildConfigRows();
+        }
+      } else {
+        // sair do modo admin
+        adminAtivo = false;
+        atualizarAdminBanner();
+        configEdicaoAtiva = false;
+        document.getElementById('configLockIcon').textContent = '🔒';
+        document.getElementById('configLockTxt').textContent  = 'Editar configurações';
+        buildConfigRows();
+      }
+    }
+  });
+
+  document.getElementById('senhaBackdrop').addEventListener('click', fecharPainelSenha);
+  document.getElementById('senhaConfirm').addEventListener('keydown', e => {
+    if (e.key === 'Enter') confirmarAlteracaoSenha();
+  }) salvarDadosNoServidor();
+
+  // ─── CONFIGURAÇÃO DE PERÍODOS ─────────────────────────────
+  const NUM_LINHAS   = 5;
+  const UNIDADES_OPT = [
+  'Plantão A','Plantão B','Plantão C','Plantão D',
+  'Expediente','Outras unidades'
+];
+
+  let configEdicaoAtiva = false;
+  let periodos = JSON.parse(localStorage.getItem('plantoes_periodos') || 'null') ||
+    Array.from({length: NUM_LINHAS}, () => ({ unidade: '', inicio: '', fim: '' }));
+
+  function savePeriodos() { salvarDadosNoServidor(); }
+
+  function buildConfigRows() {
+    const tbody = document.getElementById('configTbody');
+    tbody.innerHTML = '';
+    periodos.forEach((p, i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="config-row-num">${i+1}</td>
+        <td>
+          <select class="config-select" id="cfg_uni_${i}" ${(configEdicaoAtiva || adminAtivo) ? '' : 'disabled'}
+            onchange="periodos[${i}].unidade=this.value; savePeriodos(); atualizarStatus();">
+            <option value="">— Selecione —</option>
+            ${UNIDADES_OPT.map(u => `<option value="${u}" ${p.unidade===u?'selected':''}>${u}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <input type="date" class="config-date" id="cfg_ini_${i}" value="${p.inicio}"
+            ${(configEdicaoAtiva || adminAtivo) ? '' : 'disabled'}
+            onchange="periodos[${i}].inicio=this.value; savePeriodos(); atualizarStatus();" />
+        </td>
+        <td>
+          <input type="date" class="config-date" id="cfg_fim_${i}" value="${p.fim}"
+            ${(configEdicaoAtiva || adminAtivo) ? '' : 'disabled'}
+            onchange="periodos[${i}].fim=this.value; savePeriodos(); atualizarStatus();" />
+        </td>`;
+      tbody.appendChild(tr);
+    });
+    atualizarStatus();
+  }
+
+  function toggleConfigEdicao() {
+    // >>> se adminAtivo, apenas alterna o texto, não precisa de senha
+    if (adminAtivo) {
+      configEdicaoAtiva = !configEdicaoAtiva;
+    } else {
+      if (!configEdicaoAtiva) {
+        if (!verificarSenha('Digite a senha para editar as configurações de acesso:')) return;
+        configEdicaoAtiva = true;
+      } else {
+        configEdicaoAtiva = false;
+      }
+    }
+    if (configEdicaoAtiva || adminAtivo) {
+      document.getElementById('configLockIcon').textContent = '🔓';
+      document.getElementById('configLockTxt').textContent  = 'Bloquear edição';
+    } else {
+      document.getElementById('configLockIcon').textContent = '🔒';
+      document.getElementById('configLockTxt').textContent  = 'Editar configurações';
+    }
+    buildConfigRows();
+  }
+
+   function getPeriodoAtivo() {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    for (const p of periodos) {
+      if (!p.unidade || !p.inicio || !p.fim) continue;
+      const ini = new Date(p.inicio + 'T00:00:00');
+      const fim = new Date(p.fim   + 'T23:59:59');
+      if (hoje >= ini && hoje <= fim) return p;
+    }
+    return null;
+  }
+
+  function semPeriodosConfigurados() {
+    return periodos.every(p => !p.unidade && !p.inicio && !p.fim);
+  }
+
+  // >>> período ativo específico de uma unidade
+  function getPeriodoAtivoPorUnidade(unidade) {
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    for (const p of periodos) {
+      if (!p.unidade || !p.inicio || !p.fim) continue;
+      if (p.unidade !== unidade) continue;
+      const ini = new Date(p.inicio + 'T00:00:00');
+      const fim = new Date(p.fim   + 'T23:59:59');
+      if (hoje >= ini && hoje <= fim) return p;
+    }
+    return null;
+  }
+
+  function preenchimentoLiberado() {
+    if (adminAtivo) return true;
+    if (semPeriodosConfigurados()) return true;
+    return getPeriodoAtivo() !== null;
+  }
+
+  function semPeriodosConfigurados() {
+    return periodos.every(p => !p.unidade && !p.inicio && !p.fim);
+  }
+
+  function preenchimentoLiberado() {
+    if (adminAtivo) return true; // >>> admin pode sempre preencher
+    if (semPeriodosConfigurados()) return true;
+    return getPeriodoAtivo() !== null;
+  }
+
+  function atualizarStatus() {
+    const el = document.getElementById('periodoStatus');
+    if (semPeriodosConfigurados()) {
+      el.className = 'periodo-status neutro';
+      el.textContent = 'Sem restrição de período configurada';
+      return;
+    }
+    const p = getPeriodoAtivo();
+    if (p) {
+      el.className = 'periodo-status ativo';
+      const ini = p.inicio.split('-').reverse().join('/');
+      const fim = p.fim.split('-').reverse().join('/');
+      el.textContent = `✔ Período ativo: ${p.unidade} (${ini} → ${fim})`;
+    } else {
+      el.className = 'periodo-status inativo';
+      el.textContent = '✘ Fora do período — preenchimento bloqueado';
+    }
+  }
+
+  // ─── ESTADO CALENDÁRIO ────────────────────────────────────
+  let currentDate  = new Date();
+  let viewYear     = currentDate.getFullYear();
+  let viewMonth    = currentDate.getMonth();
+  let extras       = JSON.parse(localStorage.getItem('plantoes_cal_v2') || '{}');
+  let selectedDate = null;
+
+  const UNIDADES = [
+  'Plantão A','Plantão B','Plantão C','Plantão D',
+  'Expediente','Outras unidades'
+];
+
+  const TIPO_META = {
+    'DIURNO - SEGURANÇA':       { dotClass: 'dot-green', pillClass: 'tipo-pill-green', dotColor: '#10b981' },
+    'DIURNO - CASA DE REVISTA': { dotClass: 'dot-blue',  pillClass: 'tipo-pill-blue',  dotColor: '#3b82f6' },
+    'NOTURNO':                  { dotClass: 'dot-black', pillClass: 'tipo-pill-dark',  dotColor: '#111827' },
+  };
+
+  function getTipoMeta(tipo) {
+    if (!tipo) return TIPO_META['DIURNO - SEGURANÇA'];
+    const t = tipo.toUpperCase();
+    if (t.includes('REVISTA'))                         return TIPO_META['DIURNO - CASA DE REVISTA'];
+    if (t.includes('NOTURNO') || t.includes('NOTUR')) return TIPO_META['NOTURNO'];
+    return TIPO_META['DIURNO - SEGURANÇA'];
+  }
+
+  function tipoCardClass(tipo) {
+    const m = getTipoMeta(tipo);
+    if (m === TIPO_META['DIURNO - CASA DE REVISTA']) return 'tipo-blue';
+    if (m === TIPO_META['NOTURNO'])                  return 'tipo-black';
+    return 'tipo-green';
+  }
+
+  function pad(n) { return String(n).padStart(2,'0'); }
+  function dateKey(y,m,d) { return `${y}-${pad(m+1)}-${pad(d)}`; }
+  function save() { localStorage.setItem('plantoes_cal_v2', JSON.stringify(extras)); }
+
+  function defaultSlots() {
+    return [
+      { tipo: 'DIURNO - SEGURANÇA',       dados: null },
+      { tipo: 'DIURNO - SEGURANÇA',       dados: null },
+      { tipo: 'DIURNO - CASA DE REVISTA', dados: null },
+      { tipo: 'NOTURNO',                  dados: null },
+    ];
+  }
+
+  function migrateDay(arr) {
+    const def = defaultSlots();
+    return arr.map((item, i) => {
+      if (item === null || item === undefined) return { tipo: (def[i]?.tipo || 'DIURNO - SEGURANÇA'), dados: null };
+      if (typeof item === 'object' && 'tipo' in item) return item;
+      return { tipo: (def[i]?.tipo || 'DIURNO - SEGURANÇA'), dados: { nome: item.nome||'', unidade: item.unidade||'' } };
+    });
+  }
+
+  function getDaySlots(key) {
+    const arr = extras[key];
+    if (!arr || !Array.isArray(arr)) return null;
+    return migrateDay(arr);
+  }
+
+  function buildSelectOptions(sel) {
+    return UNIDADES.map(u => `<option value="${u}" ${sel===u?'selected':''}>${u}</option>`).join('');
+  }
+
+  // ─── RENDER ───────────────────────────────────────────────
+  function render() {
+    const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    document.getElementById('monthLabel').textContent = `${months[viewMonth]} ${viewYear}`;
+    document.getElementById('tableTitle').textContent = `📋 Plantões Extras PR01 — ${months[viewMonth]} ${viewYear}`;
+
+    document.getElementById('weekdays').innerHTML =
+      ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'].map(d => `<span>${d}</span>`).join('');
+
+    const grid = document.getElementById('calGrid');
+    grid.innerHTML = '';
+    const firstDay    = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth+1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+      const el = document.createElement('div'); el.className = 'day empty'; grid.appendChild(el);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key      = dateKey(viewYear, viewMonth, d);
+      const daySlots = getDaySlots(key) || [];
+      const total    = daySlots.length;
+      const filled   = daySlots.filter(s => s.dados !== null);
+      const isToday  = d === currentDate.getDate() && viewMonth === currentDate.getMonth() && viewYear === currentDate.getFullYear();
+
+      let statusClass = '';
+      if (total > 0 && filled.length === total) {
+        statusClass = ' all-filled';
+      } else if (filled.length > 0 && filled.length < total) {
+        statusClass = ' has-available';
+      }
+
+      const el = document.createElement('div');
+      el.className = 'day' + (isToday ? ' today' : '') + statusClass;
+      el.innerHTML  = `<span class="day-num">${d}</span>`;
+
+      if (filled.length > 0) {
+        const dotsEl = document.createElement('div');
+        dotsEl.className = 'dot-row';
+        filled.forEach(s => {
+          const dot = document.createElement('div');
+          dot.className = 'dot ' + getTipoMeta(s.tipo).dotClass;
+          dotsEl.appendChild(dot);
+        });
+        el.appendChild(dotsEl);
+      }
+
+      el.addEventListener('click', () => openDay(viewYear, viewMonth, d));
+      grid.appendChild(el);
+    }
+
+    renderSummary();
+    renderReportTable();
+    atualizarStatus();
+  }
+
+  function renderSummary() {
+    let total = 0;
+    for (let d = 1; d <= 31; d++) {
+      const slots = getDaySlots(dateKey(viewYear, viewMonth, d));
+      if (slots) total += slots.filter(s => s.dados !== null).length;
+    }
+    document.getElementById('totalExtras').textContent = total;
+  }
+
+  function renderReportTable() {
+    const container = document.getElementById('reportTableContainer');
+    const rows = [];
+    for (let d = 1; d <= 31; d++) {
+      const key   = dateKey(viewYear, viewMonth, d);
+      const slots = getDaySlots(key);
+      if (!slots) continue;
+      slots.forEach((s, i) => {
+        if (s.dados) rows.push({ date: key, slotNum: i+1, tipo: s.tipo, nome: s.dados.nome, unidade: s.dados.unidade });
+      });
+    }
+    if (rows.length === 0) { container.innerHTML = '<p class="empty-table-msg">Nenhum plantão registrado neste mês.</p>'; return; }
+
+    let html = `<table class="report-table"><thead><tr>
+      <th>Data</th><th>Vaga</th><th>Tipo</th><th>Nome do Servidor</th><th>Unidade</th>
+    </tr></thead><tbody>`;
+    rows.forEach(r => {
+      const meta = getTipoMeta(r.tipo);
+      const [y,m,d2] = r.date.split('-');
+      html += `<tr>
+        <td>${d2}/${m}/${y}</td><td>${r.slotNum}</td>
+        <td><span class="tipo-pill ${meta.pillClass}"><span class="tipo-pill-dot" style="background:${meta.dotColor}"></span>${r.tipo}</span></td>
+        <td>${r.nome}</td>
+        <td><span class="unidade-badge">${r.unidade}</span></td>
+      </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  // ─── MODAL ────────────────────────────────────────────────
+  function openDay(y, m, d) {
+    selectedDate = dateKey(y, m, d);
+    if (!extras[selectedDate]) { extras[selectedDate] = defaultSlots(); save(); }
+    else { extras[selectedDate] = migrateDay(extras[selectedDate]); save(); }
+
+    const dayNames = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+    document.getElementById('modalTitle').textContent =
+      `${dayNames[new Date(y,m,d).getDay()]}, ${pad(d)}/${pad(m+1)}/${y}`;
+
+    const avisoEl = document.getElementById('modalPeriodoAviso');
+    if (!preenchimentoLiberado()) {
+      avisoEl.innerHTML = `<div class="periodo-bloqueado-aviso">
+        🔒 <strong>Preenchimento bloqueado.</strong><br>
+        Você está fora do período de liberação configurado.<br>
+        Apenas consulta está disponível.
+      </div>`;
+    } else if (!semPeriodosConfigurados()) {
+      const pa = getPeriodoAtivo();
+      if (pa) {
+        avisoEl.innerHTML = `<div style="background:#f0fdf4;border:1px solid #6ee7b7;border-radius:8px;padding:10px;margin-bottom:12px;font-size:0.8rem;color:#065f46;text-align:center;">
+          ✔ Período ativo: <strong>${pa.unidade}</strong>
+        </div>`;
+      } else {
+        avisoEl.innerHTML = '';
+      }
+    } else {
+      avisoEl.innerHTML = '';
+    }
+
+    renderModalSlots();
+    document.getElementById('overlay').classList.add('open');
+  }
+
+  function renderModalSlots() {
+    const container = document.getElementById('slotsContainer');
+    container.innerHTML = '';
+    const daySlots = extras[selectedDate];
+    const liberado = preenchimentoLiberado();
+
+    if (!daySlots || daySlots.length === 0) {
+      container.innerHTML = '<p style="text-align:center;color:#9ca3af;font-size:0.88rem;margin-bottom:15px;font-style:italic;">Nenhuma vaga neste dia.</p>';
+      return;
+    }
+
+    daySlots.forEach((slot, index) => {
+      const meta      = getTipoMeta(slot.tipo);
+      const cardClass = tipoCardClass(slot.tipo);
+      const filled    = slot.dados !== null;
+
+      const slotEl = document.createElement('div');
+      slotEl.className = `slot-card tipo-${cardClass}`;
+
+      const headerHTML = `
+        <div class="slot-header">
+          <div class="slot-header-left">
+            <div class="tipo-indicator" style="background:${meta.dotColor}"></div>
+            <span class="slot-tipo-label">${slot.tipo}</span>
+            <span class="${filled ? 'status-preenchida' : 'status-disponivel'}">
+              ${filled ? '● preenchida' : '○ disponível'}
+            </span>
+          </div>
+          <div class="slot-header-right">
+            <button class="btn-icon-edit" onclick="editarTipo(${index})" title="Editar cabeçalho">✏️</button>
+            <button class="btn-icon-del"  onclick="removeSlot(${index})" title="Excluir vaga">🗑️</button>
+          </div>
+        </div>`;
+
+      let bodyHTML = '';
+      if (filled) {
+        bodyHTML = `
+          <div class="slot-info"><strong>Nome:</strong> ${slot.dados.nome}</div>
+          <div class="slot-info"><strong>Unidade:</strong> <span class="unidade-badge">${slot.dados.unidade}</span></div>
+          ${liberado ? `<button class="btn btn-del" onclick="unlockSlot(${index})">🔓 Liberar / Alterar Vaga</button>` : ''}
+        `;
+      } else if (liberado) {
+        bodyHTML = `
+          <input type="text" id="nome_${index}" placeholder="Nome do servidor" autocomplete="off" />
+          <div class="select-wrapper">
+            <select id="unidade_${index}">
+              <option value="" disabled selected>Selecione a unidade</option>
+              ${buildSelectOptions('')}
+            </select>
+          </div>
+          <button class="btn btn-save" onclick="saveSlot(${index})">💾 Salvar Vaga</button>
+        `;
+      } else {
+        bodyHTML = `<div style="font-size:0.82rem;color:#9ca3af;font-style:italic;padding:4px 0;">Preenchimento bloqueado neste período.</div>`;
+      }
+
+      slotEl.innerHTML = headerHTML + bodyHTML;
+      container.appendChild(slotEl);
+    });
+  }
+
+  // ─── AÇÕES ────────────────────────────────────────────────
+   window.saveSlot = function(index) {
+    if (!preenchimentoLiberado()) {
+      alert('Preenchimento fora do período permitido.');
+      return;
+    }
+
+    const nome    = document.getElementById(`nome_${index}`).value.trim();
+    const unidade = document.getElementById(`unidade_${index}`).value;
+
+    if (!nome)    { alert('Por favor, preencha o nome do servidor.'); return; }
+    if (!unidade) { alert('Por favor, selecione a unidade.'); return; }
+
+    // bloqueio por unidade específica, exceto admin
+    if (!adminAtivo) {
+      const periodoUnidade = getPeriodoAtivoPorUnidade(unidade);
+      if (!periodoUnidade) {
+        alert(`Atenção: a unidade "${unidade}" não está em período de liberação hoje. Preenchimento não permitido.`);
+        return;
+      }
+    }
+
+    const prefix = selectedDate.substring(0, 7);
+    if (countMonthlyShifts(nome, prefix) >= 3) {
+      alert(`Atenção: "${nome}" já atingiu o limite máximo de 3 plantões neste mês.`);
+      return;
+    }
+
+    extras[selectedDate][index].dados = { nome, unidade };
+    save(); render(); renderModalSlots();
+  };
+
+  window.editarTipo = function(index) {
+    if (!adminAtivo && !verificarSenha('Digite a senha para editar o cabeçalho:')) return;
+    const novoTipo = prompt('Novo cabeçalho da vaga:', extras[selectedDate][index].tipo);
+    if (novoTipo === null) return;
+    if (!novoTipo.trim()) { alert('O cabeçalho não pode estar vazio.'); return; }
+    extras[selectedDate][index].tipo = novoTipo.trim();
+    save(); render(); renderModalSlots();
+  };
+
+  window.unlockSlot = function(index) {
+    if (!adminAtivo && !verificarSenha('Digite a senha para liberar / alterar esta vaga:')) return;
+    extras[selectedDate][index].dados = null;
+    save(); render(); renderModalSlots();
+  };
+
+  window.addSlot = function() {
+    if (!adminAtivo && !verificarSenha('Digite a senha para adicionar uma nova vaga:')) return;
+    extras[selectedDate].push({ tipo: 'DIURNO - SEGURANÇA', dados: null });
+    save(); renderModalSlots();
+  };
+
+  window.removeSlot = function(index) {
+    if (!adminAtivo && !verificarSenha('Digite a senha para excluir esta vaga definitivamente:')) return;
+    extras[selectedDate].splice(index, 1);
+    if (extras[selectedDate].length === 0) delete extras[selectedDate];
+    save(); render(); renderModalSlots();
+  };
+
+  function countMonthlyShifts(nome, prefix) {
+    let count = 0;
+    Object.keys(extras).forEach(date => {
+      if (date.startsWith(prefix)) {
+        const slots = extras[date];
+        if (Array.isArray(slots)) slots.forEach(s => { if (s?.dados?.nome === nome) count++; });
+      }
+    });
+    return count;
+  }
+
+  // ─── EXPORTAÇÃO ───────────────────────────────────────────
+  window.exportToExcel = function() {
+    const dates = Object.keys(extras).sort();
+    let hasData = false;
+    let html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body>';
+    html += '<table border="1"><tr>'
+      + '<th style="background:#7c3aed;color:white;">Data</th>'
+      + '<th style="background:#7c3aed;color:white;">Vaga</th>'
+      + '<th style="background:#7c3aed;color:white;">Tipo</th>'
+      + '<th style="background:#7c3aed;color:white;">Nome do Servidor</th>'
+      + '<th style="background:#7c3aed;color:white;">Unidade</th>'
+      + '</tr>';
+    dates.forEach(date => {
+      const slots = extras[date];
+      if (Array.isArray(slots)) {
+        slots.forEach((s, i) => {
+          if (s?.dados?.nome) {
+            hasData = true;
+            const [y,m,d] = date.split('-');
+            html += `<tr><td>${d}/${m}/${y}</td><td>Vaga ${i+1}</td><td>${s.tipo}</td><td>${s.dados.nome}</td><td>${s.dados.unidade}</td></tr>`;
+          }
+        });
+      }
+    });
+    html += '</table></body></html>';
+    if (!hasData) { alert('Não há plantões preenchidos para exportar.'); return; }
+    const blob = new Blob(['\ufeff', html], { type: 'application/vnd.ms-excel' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'Relatorio_Plantoes_Extras_PR01.xls';
+    document.body.appendChild(a); a.click();
+    document.body.removeChild(a); URL.revokeObjectURL(url);
+  };
+
+  // ─── EVENTOS ──────────────────────────────────────────────
+  document.getElementById('btnClose').addEventListener('click', () =>
+    document.getElementById('overlay').classList.remove('open'));
+  document.getElementById('overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('overlay'))
+      document.getElementById('overlay').classList.remove('open');
+  });
+  document.getElementById('prevMonth').addEventListener('click', () => {
+    if (--viewMonth < 0) { viewMonth = 11; viewYear--; } render();
+  });
+  document.getElementById('nextMonth').addEventListener('click', () => {
+    if (++viewMonth > 11) { viewMonth = 0; viewYear++; } render();
+  });
+
+  // ─── INIT ─────────────────────────────────────────────────
+ (async function init() {
+  await carregarDadosDoServidor();  // pega dados em comum
+  atualizarAdminBanner();
+  buildConfigRows();
+  render();
+})();
+</script>
+</body>
+</html>
