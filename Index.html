@@ -493,29 +493,10 @@
     <button class="btn-senha-fechar"    onclick="fecharPainelSenha()">Cancelar</button>
   </div>
 </div>
-const API_URL = 'https://plantoes-pr01-backend.onrender.com';
+
 <script>
   // ─── SENHA / ADMIN ─────────────────────────────────────────
-  let SENHA = 'segurança2026';
-let periodos = Array.from({length: NUM_LINHAS}, () => ({
-  unidade: '',
-  inicio: '',
-  fim: ''
-}));
-let extras = {};
-
-async function salvarDadosNoServidor() {
-  try {
-    await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ senha: SENHA, periodos, extras })
-    });
-  } catch (err) {
-    console.error('Erro ao salvar dados no servidor:', err);
-    alert('Não foi possível salvar no servidor.');
-  }
-}
+  let SENHA = localStorage.getItem('plantoes_senha') || 'segurança2026';
 
   // >>> flag global do modo admin
   let adminAtivo = false;
@@ -571,7 +552,7 @@ async function salvarDadosNoServidor() {
     if (nova.length < 6)   { msgErro.textContent = 'Mínimo 6 caracteres.'; return; }
     if (nova !== confirma) { msgErro.textContent = 'Confirmação não confere.'; return; }
     SENHA = nova;
-    salvarDadosNoServidor();
+    localStorage.setItem('plantoes_senha', SENHA);
     msgOk.textContent = '✔ Senha alterada com sucesso!';
     setTimeout(fecharPainelSenha, 1800);
   }
@@ -612,7 +593,7 @@ async function salvarDadosNoServidor() {
   document.getElementById('senhaBackdrop').addEventListener('click', fecharPainelSenha);
   document.getElementById('senhaConfirm').addEventListener('keydown', e => {
     if (e.key === 'Enter') confirmarAlteracaoSenha();
-  }) salvarDadosNoServidor();
+  });
 
   // ─── CONFIGURAÇÃO DE PERÍODOS ─────────────────────────────
   const NUM_LINHAS   = 5;
@@ -625,7 +606,7 @@ async function salvarDadosNoServidor() {
   let periodos = JSON.parse(localStorage.getItem('plantoes_periodos') || 'null') ||
     Array.from({length: NUM_LINHAS}, () => ({ unidade: '', inicio: '', fim: '' }));
 
-  function savePeriodos() { salvarDadosNoServidor(); }
+  function savePeriodos() { localStorage.setItem('plantoes_periodos', JSON.stringify(periodos)); }
 
   function buildConfigRows() {
     const tbody = document.getElementById('configTbody');
@@ -1116,12 +1097,9 @@ async function salvarDadosNoServidor() {
   });
 
   // ─── INIT ─────────────────────────────────────────────────
- (async function init() {
-  await carregarDadosDoServidor();  // pega dados em comum
-  atualizarAdminBanner();
+  atualizarAdminBanner();  // >>> inicializa banner
   buildConfigRows();
   render();
-})();
 </script>
 </body>
 </html>
